@@ -284,6 +284,37 @@ The service provides built-in monitoring through the status endpoint:
 - **Error tracking**: Failed requests with error messages
 - **Response times**: Performance metrics for each request
 
+## 📋 Logging
+
+### Application Logs
+The service logs all activities to `app.log` on the server:
+
+```bash
+# Check logs
+./scripts/check-logs.sh
+
+# View last 50 lines
+./scripts/view-logs.sh
+
+# View last 100 lines
+./scripts/view-logs.sh 100
+
+# Follow logs in real-time
+./scripts/view-logs.sh 50 follow
+```
+
+### Log Locations
+- **Application logs**: `/home/candidate/app/app.log`
+- **NPM logs**: `/home/candidate/app/npm-debug.log`
+- **System logs**: `/var/log/syslog` (requires sudo)
+
+### Log Content
+The application logs include:
+- URL fetch start/completion messages
+- Response times for each request
+- Error messages for failed requests
+- Service startup and shutdown events
+
 ## 🛡️ Security Features
 
 - **CORS enabled**: Cross-origin requests supported
