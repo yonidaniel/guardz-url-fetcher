@@ -4,8 +4,7 @@
   "description": "A NestJS service that fetches content from HTTP URLs",
   "main": "dist/src/main.js",
   "directories": {
-    "doc": "docs",
-    "test": "tests"
+    "test": "test"
   },
   "scripts": {
     "build": "nest build",

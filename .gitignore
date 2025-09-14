@@ -91,6 +91,12 @@ jspm_packages/
 .env
 .env.test
 
+# SSH keys (should not be in repository)
+id_ed25519
+id_ed25519.pub
+*.pem
+*.key
+
 # parcel-bundler cache
 .cache
 .parcel-cache

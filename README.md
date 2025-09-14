@@ -193,19 +193,31 @@ console.log(results.data);
 ## 🏗️ Project Structure
 
 ```
-src/
-├── url-fetcher/
-│   ├── dto/
-│   │   └── fetch-urls.dto.ts          # Data Transfer Objects
-│   ├── interfaces/
-│   │   └── url-result.interface.ts    # TypeScript interfaces
-│   ├── url-fetcher.controller.ts      # REST API controller
-│   ├── url-fetcher.service.ts         # Business logic service
-│   ├── url-fetcher.module.ts          # NestJS module
-│   ├── url-fetcher.controller.spec.ts # Controller tests
-│   └── url-fetcher.service.spec.ts    # Service tests
-├── app.module.ts                      # Main application module
-└── main.ts                           # Application entry point
+guardz-url-fetcher/
+├── src/                              # Source code
+│   ├── url-fetcher/                  # Main service module
+│   │   ├── dto/                      # Data Transfer Objects
+│   │   │   └── fetch-urls.dto.ts
+│   │   ├── interfaces/               # TypeScript interfaces
+│   │   │   └── url-result.interface.ts
+│   │   ├── url-fetcher.controller.ts # REST API controller
+│   │   ├── url-fetcher.service.ts    # Business logic service
+│   │   ├── url-fetcher.module.ts     # NestJS module
+│   │   ├── url-fetcher.controller.spec.ts # Controller tests
+│   │   └── url-fetcher.service.spec.ts   # Service tests
+│   ├── app.module.ts                 # Main application module
+│   └── main.ts                      # Application entry point
+├── test/                            # End-to-end tests
+│   ├── app.e2e-spec.ts
+│   └── jest-e2e.json
+├── scripts/                         # Deployment and utility scripts
+│   └── deploy.sh                    # GCP deployment script
+├── dist/                           # Compiled JavaScript (generated)
+├── package.json                    # Dependencies and scripts
+├── tsconfig.json                   # TypeScript configuration
+├── nest-cli.json                   # NestJS CLI configuration
+├── .gitignore                      # Git ignore rules
+└── README.md                       # This file
 ```
 
 ## 🔧 Configuration
@@ -243,6 +255,11 @@ CMD ["node", "dist/main"]
 
 2. **Deploy to GCP Compute Engine:**
    ```bash
+   # Place your SSH private key in the project root as 'id_ed25519'
+   # Then run the deployment script
+   ./scripts/deploy.sh
+   
+   # Or manually deploy:
    # Copy files to server
    scp -i your-key -r . candidate@your-server-ip:/home/candidate/app
    

@@ -8,7 +8,7 @@ set -e
 # Configuration
 SERVER_IP="34.135.82.223"
 SERVER_USER="candidate"
-SSH_KEY="/Users/yoni/Guardz/id_ed25519"
+SSH_KEY="id_ed25519"  # SSH key should be in the same directory as this script
 APP_DIR="/home/candidate/app"
 PORT=8080
 
