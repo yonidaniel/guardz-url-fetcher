@@ -34,6 +34,9 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Local development logs
+local-app.log
+
 # Runtime data
 pids
 *.pid
