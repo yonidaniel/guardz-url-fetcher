@@ -284,6 +284,52 @@ The service provides built-in monitoring through the status endpoint:
 - **Error tracking**: Failed requests with error messages
 - **Response times**: Performance metrics for each request
 
+## 🐛 Debugging
+
+The application includes comprehensive debugging tools:
+
+### VS Code Debugging
+
+1. Open the project in VS Code
+2. Set breakpoints by clicking in the left margin
+3. Press F5 or go to Run > Start Debugging
+4. Select "Debug NestJS App"
+
+### Command Line Debugging
+
+```bash
+# Start with debugging enabled
+npm run debug
+
+# Start with breakpoints (waits for debugger)
+npm run debug:break
+
+# Debug tests
+npm run test:debug
+```
+
+### Chrome DevTools
+
+1. Start debug mode: `npm run debug`
+2. Open Chrome and go to `chrome://inspect`
+3. Click "Open dedicated DevTools for Node"
+
+### Debug Helper Script
+
+```bash
+# Interactive debugging menu
+./scripts/debug.sh
+```
+
+### Debug Features
+
+- ✅ **VS Code Integration** - Full debugging support
+- ✅ **Breakpoint Support** - Set breakpoints anywhere
+- ✅ **Variable Inspection** - View and modify variables
+- ✅ **Step-through Debugging** - Line-by-line execution
+- ✅ **Enhanced Logging** - Detailed debug logs
+- ✅ **Real-time Monitoring** - Watch logs as you debug
+
 ## 📋 Logging
 
 ### Application Logs

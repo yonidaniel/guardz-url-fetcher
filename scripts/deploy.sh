@@ -8,11 +8,14 @@ set -e
 # Configuration
 SERVER_IP="34.135.82.223"
 SERVER_USER="candidate"
-SSH_KEY="id_ed25519"  # SSH key should be in the same directory as this script
+SSH_KEY="id_ed25519"  # SSH key is in project root
 APP_DIR="/home/candidate/app"
 PORT=8080
 
 echo "🚀 Starting deployment to GCP Compute Engine..."
+
+# Change to project root directory
+cd "$(dirname "$0")/.."
 
 # Check if SSH key exists
 if [ ! -f "$SSH_KEY" ]; then
@@ -58,8 +61,13 @@ tar --exclude='node_modules' \
     --exclude='docs' \
     --exclude='*.md' \
     --exclude='.gitignore' \
-    --exclude='.deployignore' \
-    --exclude='deploy.sh' \
+    --exclude='debug.config.js' \
+    --exclude='PROJECT_STRUCTURE.md' \
+    --exclude='scripts/debug.sh' \
+    --exclude='scripts/test-*.sh' \
+    --exclude='scripts/check-logs.sh' \
+    --exclude='scripts/view-*.sh' \
+    --exclude='id_ed25519*' \
     -czf - . | ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && tar -xzf -"
 
 if [ $? -ne 0 ]; then
