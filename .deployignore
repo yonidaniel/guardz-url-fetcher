@@ -1,0 +1,20 @@
+# Files and directories to exclude from deployment
+node_modules/
+.git/
+dist/
+coverage/
+*.log
+.env*
+.DS_Store
+*.swp
+*.swo
+.vscode/
+.idea/
+test/
+*.spec.ts
+*.test.ts
+docs/
+*.md
+.gitignore
+.deployignore
+deploy.sh

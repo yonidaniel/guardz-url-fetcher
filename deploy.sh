@@ -32,9 +32,35 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Copy files to server
+# Show what we're excluding and size savings
+echo "📊 Checking file sizes..."
+TOTAL_SIZE=$(du -sh . | cut -f1)
+EXCLUDED_SIZE=$(du -sh node_modules/ .git/ dist/ coverage/ 2>/dev/null | awk '{sum+=$1} END {print sum "M"}' || echo "0M")
+echo "📁 Total project size: $TOTAL_SIZE"
+echo "🚫 Excluding: node_modules, .git, coverage, tests, and other unnecessary files"
 echo "📤 Copying files to server..."
-scp -i "$SSH_KEY" -r . "$SERVER_USER@$SERVER_IP:$APP_DIR"
+
+# Use tar for efficient transfer (works reliably across systems)
+echo "📦 Using tar for efficient file transfer..."
+tar --exclude='node_modules' \
+    --exclude='.git' \
+    --exclude='coverage' \
+    --exclude='*.log' \
+    --exclude='.env*' \
+    --exclude='.DS_Store' \
+    --exclude='*.swp' \
+    --exclude='*.swo' \
+    --exclude='.vscode' \
+    --exclude='.idea' \
+    --exclude='test' \
+    --exclude='*.spec.ts' \
+    --exclude='*.test.ts' \
+    --exclude='docs' \
+    --exclude='*.md' \
+    --exclude='.gitignore' \
+    --exclude='.deployignore' \
+    --exclude='deploy.sh' \
+    -czf - . | ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && tar -xzf -"
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to copy files to server"
@@ -46,9 +72,24 @@ echo "🔧 Setting up application on server..."
 ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" << EOF
     cd $APP_DIR
     
-    # Install dependencies
+    # Install curl if not present
+    if ! command -v curl &> /dev/null; then
+        echo "📦 Installing curl..."
+        sudo apt-get update && sudo apt-get install -y curl
+    fi
+    
+    # Install Node.js if not present
+    if ! command -v node &> /dev/null; then
+        echo "📦 Installing Node.js..."
+        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    else
+        echo "✅ Node.js already installed: \$(node --version)"
+    fi
+    
+    # Install dependencies (production only)
     echo "📥 Installing dependencies..."
-    npm install --production
+    npm install --production --no-optional
     
     # Kill any existing process on the port
     echo "🛑 Stopping existing processes..."
