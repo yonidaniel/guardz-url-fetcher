@@ -68,7 +68,7 @@ tar --exclude='node_modules' \
     --exclude='scripts/check-logs.sh' \
     --exclude='scripts/view-*.sh' \
     --exclude='id_ed25519*' \
-    -czf - . | ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && tar -xzf -"
+    -czf - . | ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" "mkdir -p $APP_DIR && rm -rf $APP_DIR/* && cd $APP_DIR && tar -xzf -"
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to copy files to server"
