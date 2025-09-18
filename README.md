@@ -4,14 +4,19 @@ A NestJS-based microservice that fetches content from HTTP URLs and provides a R
 
 ## 🚀 Features
 
-- **URL Fetching**: Submit multiple URLs via POST request and fetch their content
-- **Result Storage**: In-memory storage of fetch results with status tracking
-- **REST API**: Clean REST endpoints for URL submission and result retrieval
-- **Error Handling**: Comprehensive error handling for failed requests
+- **Parallel URL Fetching**: Submit multiple URLs via POST request and fetch their content concurrently
+- **Intelligent Caching**: In-memory cache with TTL and size limits to avoid duplicate requests
+- **Rate Limiting**: Per-host concurrency and RPS controls to prevent overwhelming servers
+- **Admission Control**: Smart request queuing and throttling to manage server load
+- **Link Discovery**: Automatic extraction and following of same-domain links with configurable depth
+- **Progress Tracking**: Real-time status updates and comprehensive result metadata
+- **REST API**: Clean REST endpoints for URL submission, result retrieval, and configuration
+- **Error Handling**: Comprehensive error handling with retry logic and detailed error reporting
 - **Response Time Tracking**: Measures and stores response times for each URL
 - **Status Monitoring**: Track pending, successful, and failed requests
 - **CORS Enabled**: Cross-origin requests supported
 - **Comprehensive Testing**: Unit tests, integration tests, and e2e tests
+- **API Documentation**: Swagger/OpenAPI docs available at `/api/docs`
 
 ## 📋 Requirements
 
@@ -58,13 +63,49 @@ npm run start
 The service will be available at:
 - **Local**: `http://localhost:8080`
 - **API Base**: `http://localhost:8080/api`
+- **API Documentation**: `http://localhost:8080/api/docs`
+- **Production**: `http://34.135.82.223:8080/api`
 
 ## 📡 API Endpoints
 
-### 1. Submit URLs for Fetching
+### Root Information
+**GET** `/api`
+Returns service information and available endpoints.
+
+**Response:**
+```json
+{
+  "message": "Guardz URL Fetcher Service",
+  "docs": "/api/docs",
+  "endpoints": {
+    "status": "/api/urls/status",
+    "results": "/api/urls",
+    "submit": "/api/urls/fetch",
+    "config": "/api/config"
+  }
+}
+```
+
+### 1. Service Status
+**GET** `/api/urls/status`
+
+Get the current status of the service and runtime statistics.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "activeRequests": 0,
+  "totalProcessed": 150,
+  "uptime": "2h 15m",
+  "memoryUsage": "45MB"
+}
+```
+
+### 2. Submit URLs for Fetching
 **POST** `/api/urls/fetch`
 
-Submit URLs to be fetched and processed.
+Submit URLs to be fetched and processed with parallel execution and link discovery.
 
 **Request Body:**
 ```json
@@ -72,7 +113,7 @@ Submit URLs to be fetched and processed.
   "urls": [
     "https://httpbin.org/json",
     "https://httpbin.org/xml",
-    "https://example.com"
+    "https://api.github.com/users/octocat"
   ]
 }
 ```
@@ -80,55 +121,78 @@ Submit URLs to be fetched and processed.
 **Response:**
 ```json
 {
-  "message": "Processing 3 URLs",
+  "message": "URLs submitted for processing",
+  "requestId": "req_12345",
+  "totalUrls": 3,
+  "estimatedTime": "2-5 seconds"
+}
+```
+
+### 3. Get All Results
+**GET** `/api/urls`
+
+Retrieve all processed results with comprehensive metadata.
+
+**Response:**
+```json
+{
   "results": [
     {
       "url": "https://httpbin.org/json",
       "status": "success",
-      "content": "{...}",
-      "timestamp": "2024-01-01T00:00:00.000Z",
-      "responseTime": 150
+      "statusCode": 200,
+      "contentType": "application/json",
+      "content": {...},
+      "processingTime": 1250,
+      "timestamp": "2024-01-15T10:30:00Z",
+      "depth": 0,
+      "linkCount": 5
     }
-  ]
-}
-```
-
-### 2. Get All Results
-**GET** `/api/urls`
-
-Retrieve all URL fetch results with summary statistics.
-
-**Response:**
-```json
-{
-  "results": [...],
+  ],
   "summary": {
     "total": 10,
+    "successful": 7,
+    "failed": 1,
     "pending": 2,
-    "success": 7,
-    "error": 1
+    "averageProcessingTime": 2000
   }
 }
 ```
 
-### 3. Get Service Status
-**GET** `/api/urls/status`
+### 4. View Configuration
+**GET** `/api/config`
 
-Get the current status of the service and summary statistics.
+Get current service configuration including concurrency, rate limits, and cache settings.
 
 **Response:**
 ```json
 {
-  "status": "running",
-  "timestamp": "2024-01-01T00:00:00.000Z",
-  "summary": {
-    "total": 10,
-    "pending": 2,
-    "success": 7,
-    "error": 1
+  "crawl": {
+    "maxDepth": 2,
+    "maxPagesPerDepth": 10,
+    "maxUrlsPerRequest": 5,
+    "jobConcurrency": 5,
+    "perDepthBatchSize": 3
+  },
+  "concurrency": {
+    "maxConcurrency": 10
+  },
+  "perHost": {
+    "perHostConcurrency": 3,
+    "perHostRps": 2,
+    "perHostBurst": 5
+  },
+  "cache": {
+    "ttlMs": 600000,
+    "maxItems": 10000
   }
 }
 ```
+
+### 5. API Documentation
+**GET** `/api/docs`
+
+Interactive Swagger/OpenAPI documentation for all endpoints.
 
 ## 🧪 Testing
 
@@ -156,22 +220,30 @@ npm run test:e2e
 
 ### Using curl
 
-1. **Submit URLs for fetching:**
+1. **Check service status:**
+   ```bash
+   curl http://localhost:8080/api/urls/status
+   ```
+
+2. **Submit URLs for fetching:**
    ```bash
    curl -X POST -H "Content-Type: application/json" \
      -d '{"urls": ["https://httpbin.org/json", "https://httpbin.org/xml"]}' \
      http://localhost:8080/api/urls/fetch
    ```
 
-2. **Get all results:**
+3. **Get all results:**
    ```bash
    curl http://localhost:8080/api/urls
    ```
 
-3. **Check service status:**
+4. **View configuration:**
    ```bash
-   curl http://localhost:8080/api/urls/status
+   curl http://localhost:8080/api/config
    ```
+
+5. **Access API documentation:**
+   Open `http://localhost:8080/api/docs` in your browser
 
 ### Using JavaScript/Node.js
 
@@ -196,22 +268,37 @@ console.log(results.data);
 guardz-url-fetcher/
 ├── src/                              # Source code
 │   ├── url-fetcher/                  # Main service module
+│   │   ├── core/                     # Core business logic
+│   │   │   ├── crawl-config.ts       # Centralized configuration
+│   │   │   ├── link-scheduling.policy.ts # Link discovery policy
+│   │   │   ├── runtime.ts            # Runtime state management
+│   │   │   ├── url-fetcher.controller.ts # REST API controller
+│   │   │   └── url-fetcher.service.ts # Main business logic
 │   │   ├── dto/                      # Data Transfer Objects
 │   │   │   └── fetch-urls.dto.ts
 │   │   ├── interfaces/               # TypeScript interfaces
 │   │   │   └── url-result.interface.ts
-│   │   ├── url-fetcher.controller.ts # REST API controller
-│   │   ├── url-fetcher.service.ts    # Business logic service
+│   │   ├── services/                 # Supporting services
+│   │   │   ├── admission-control.service.ts # Request queuing
+│   │   │   ├── cache.service.ts      # In-memory caching
+│   │   │   ├── concurrency.service.ts # Concurrency management
+│   │   │   ├── host-limiter.service.ts # Per-host rate limiting
+│   │   │   ├── http-client.service.ts # HTTP client wrapper
+│   │   │   └── link-extractor.service.ts # Link extraction
 │   │   ├── url-fetcher.module.ts     # NestJS module
 │   │   ├── url-fetcher.controller.spec.ts # Controller tests
-│   │   └── url-fetcher.service.spec.ts   # Service tests
+│   │   └── url-fetcher.service.spec.ts # Service tests
+│   ├── app.controller.ts             # Root API controller
 │   ├── app.module.ts                 # Main application module
 │   └── main.ts                      # Application entry point
 ├── test/                            # End-to-end tests
 │   ├── app.e2e-spec.ts
 │   └── jest-e2e.json
 ├── scripts/                         # Deployment and utility scripts
-│   └── deploy.sh                    # GCP deployment script
+│   ├── deploy.sh                    # GCP deployment script
+│   ├── clean-and-deploy.sh          # Clean deployment script
+│   ├── check-logs.sh                # Remote log checking
+│   └── view-logs.sh                 # Remote log viewing
 ├── dist/                           # Compiled JavaScript (generated)
 ├── package.json                    # Dependencies and scripts
 ├── tsconfig.json                   # TypeScript configuration
@@ -222,15 +309,45 @@ guardz-url-fetcher/
 
 ## 🔧 Configuration
 
-### Environment Variables
+The service supports extensive configuration via environment variables. All settings have sensible defaults and can be viewed via `GET /api/config`.
 
+### Core Settings
 - `PORT`: Server port (default: 8080)
 - `NODE_ENV`: Environment (development/production)
 
-### Timeout Settings
+### Crawl Configuration
+- `CRAWL_MAX_DEPTH`: How many link-hops to follow from each input URL (0 = only inputs)
+- `CRAWL_MAX_PAGES_PER_DEPTH`: Per page cap for links queued to the next depth
+- `CRAWL_MAX_URLS_PER_REQUEST`: Max root URLs accepted per API call
+- `CRAWL_JOB_CONCURRENCY`: In-flight page fetches per crawl job
+- `CRAWL_PER_DEPTH_BATCH_SIZE`: Concurrent URLs processed within a depth layer
 
-- URL fetch timeout: 10 seconds
+### Admission Control
+- `MAX_ACTIVE_JOBS`: Crawl jobs processed simultaneously
+- `MAX_QUEUED_JOBS`: Queue size before returning 429 (Too Many Requests)
+
+### Concurrency Management
+- `MAX_CONCURRENCY`: Global cap on in-flight HTTP requests across the server
+
+### Per-Host Rate Limiting
+- `PER_HOST_CONCURRENCY`: Max simultaneous requests to any single host
+- `PER_HOST_RPS`: Sustained requests-per-second limit to any single host
+- `PER_HOST_BURST`: Short-term burst allowance per host (token bucket capacity)
+
+### HTTP Client Settings
+- `HTTP_MAX_ATTEMPTS`: Maximum retry attempts for HTTP requests
+- `HTTP_BASE_DELAY_MS`: Initial backoff between retries (doubles with each attempt)
+- Per-request timeout: 10 seconds (fixed)
 - User-Agent: `Guardz-URL-Fetcher/1.0`
+
+### Cache Configuration
+- `CACHE_TTL_MS`: How long cached fetch results are kept before expiring (default: 600000ms = 10 minutes)
+- `CACHE_MAX_ITEMS`: Maximum number of cached URL entries held in memory (default: 10000)
+
+### View Current Configuration
+```bash
+curl http://localhost:8080/api/config
+```
 
 ## 🚀 Deployment
 
@@ -259,21 +376,23 @@ CMD ["node", "dist/main"]
    # Then run the deployment script
    ./scripts/deploy.sh
    
-   # Or manually deploy:
-   # Copy files to server
-   scp -i your-key -r . candidate@your-server-ip:/home/candidate/app
-   
-   # SSH to server
-   ssh -i your-key candidate@your-server-ip
-   
-   # Install dependencies and start
-   cd /home/candidate/app
-   npm install
-   npm run start:prod
+   # Or clean deployment (stops existing service first)
+   ./scripts/clean-and-deploy.sh
    ```
 
 3. **Access the service:**
-   - `http://your-server-ip:8080/api`
+   - **Production**: `http://34.135.82.223:8080/api`
+   - **API Documentation**: `http://34.135.82.223:8080/api/docs`
+   - **Status**: `http://34.135.82.223:8080/api/urls/status`
+
+4. **Monitor the service:**
+   ```bash
+   # Check logs on the server
+   ./scripts/check-logs.sh
+   
+   # View logs in real-time
+   ./scripts/view-logs.sh 50 follow
+   ```
 
 ## 📊 Monitoring
 
@@ -314,11 +433,20 @@ npm run test:debug
 2. Open Chrome and go to `chrome://inspect`
 3. Click "Open dedicated DevTools for Node"
 
-### Debug Helper Script
+### Available Scripts
 
 ```bash
-# Interactive debugging menu
-./scripts/debug.sh
+# Deploy to production
+./scripts/deploy.sh
+
+# Clean deployment (stops existing service first)
+./scripts/clean-and-deploy.sh
+
+# Check remote logs
+./scripts/check-logs.sh
+
+# View remote logs in real-time
+./scripts/view-logs.sh [lines] [follow]
 ```
 
 ### Debug Features
@@ -336,7 +464,7 @@ npm run test:debug
 The service logs all activities to `app.log` on the server:
 
 ```bash
-# Check logs
+# Check logs and system status
 ./scripts/check-logs.sh
 
 # View last 50 lines
@@ -356,17 +484,24 @@ The service logs all activities to `app.log` on the server:
 
 ### Log Content
 The application logs include:
-- URL fetch start/completion messages
-- Response times for each request
-- Error messages for failed requests
-- Service startup and shutdown events
+- Service startup with configuration summary
+- URL fetch start/completion messages with response times
+- Cache hits and misses
+- Error messages for failed requests with retry attempts
+- Concurrency and rate limiting events
+- Link discovery and depth processing
+- Service health and resource usage
 
 ## 🛡️ Security Features
 
 - **CORS enabled**: Cross-origin requests supported
-- **Input validation**: URL validation and sanitization
+- **Input validation**: URL validation and sanitization with DTO validation
+- **Rate limiting**: Per-host concurrency and RPS controls to prevent abuse
+- **Admission control**: Request queuing and throttling to manage server load
 - **Error handling**: Secure error messages without sensitive data
-- **Timeout protection**: Prevents hanging requests
+- **Timeout protection**: Prevents hanging requests (10-second timeout)
+- **Host restrictions**: Configurable domain allowlists
+- **Retry logic**: Exponential backoff for transient failures
 
 ## 🤝 Contributing
 
