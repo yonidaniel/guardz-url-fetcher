@@ -80,26 +80,21 @@ echo "🔧 Setting up application on server..."
 ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" << EOF
     cd $APP_DIR
     
-    # Install curl and lsof if not present
+    # Best-effort ensure curl and lsof exist (ignore apt lock failures)
     if ! command -v curl &> /dev/null || ! command -v lsof &> /dev/null; then
-        echo "📦 Installing curl and lsof..."
-        sudo apt-get update && sudo apt-get install -y curl lsof
+        echo "📦 Ensuring curl and lsof are installed (best-effort)..."
+        sudo killall -q apt apt-get || true
+        sudo rm -f /var/lib/apt/lists/lock /var/lib/dpkg/lock-frontend || true
+        sudo dpkg --configure -a || true
+        (sudo apt-get update && sudo apt-get install -y curl lsof) || echo "⚠️  Skipping curl/lsof install due to apt lock"
     fi
     
-    # Install Node.js 20 LTS if not present or version < 20
-    if ! command -v node &> /dev/null; then
-        echo "📦 Installing Node.js 20 LTS..."
-        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+    # Use existing Node.js (project pinned to run on Node 18+). Show version for diagnostics.
+    if command -v node &> /dev/null; then
+        echo "✅ Node.js present: \$(node --version)"
     else
-        CURRENT_NODE=$(node -v | sed 's/v\([0-9]*\).*/\1/')
-        if [ "$CURRENT_NODE" -lt 20 ]; then
-            echo "📦 Upgrading Node.js to 20 LTS..."
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-        else
-            echo "✅ Node.js already installed: \$(node --version)"
-        fi
+        echo "❌ Node.js not found. Please install Node 18+ on the server."
+        exit 1
     fi
     
     # Install dependencies (production only)

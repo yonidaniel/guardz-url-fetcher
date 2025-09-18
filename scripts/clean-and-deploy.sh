@@ -20,7 +20,7 @@ echo "🛑 Stopping remote app and wiping directory..."
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_IP" "\
   sudo pkill -f 'node dist/src/main' || true; \
   sudo pkill -f 'npm run start:prod' || true; \
-  sudo fuser -k 8080/tcp || true; \
+  (command -v fuser >/dev/null 2>&1 && sudo fuser -k 8080/tcp) || true; \
   rm -rf $APP_DIR/*; \
   mkdir -p $APP_DIR; \
   echo '✅ Remote app directory cleaned'"

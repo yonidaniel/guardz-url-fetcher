@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, BadRequestException, Delete } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UrlFetcherService } from './url-fetcher.service';
 import { CRAWL_CONFIG, clampMaxLinksPerPage } from './crawl-config';
@@ -96,6 +96,14 @@ export class UrlFetcherController {
       summary,
       depthCounts,
     };
+  }
+
+  @Delete('clear')
+  @ApiOperation({ summary: 'Clear all cached results and in-memory data' })
+  @ApiResponse({ status: 200, description: 'All results cleared' })
+  async clearAll(): Promise<{ message: string; clearedAt: Date }> {
+    this.urlFetcherService.clearResults();
+    return { message: 'All results and cache cleared', clearedAt: new Date() };
   }
 }
 

@@ -26,6 +26,21 @@ export class UrlFetcherService {
     const jobStartMs = Date.now();
     this.logger.log(`Starting to fetch ${urls.length} URLs`);
     this.logger.debug(`URLs to fetch: ${JSON.stringify(urls)}, maxDepth=${maxDepth}, maxLinksPerPage=${maxLinksPerPage}`);
+    // Theoretical capacity log (upper bound assuming each page yields 'maxLinksPerPage' new same-domain links, no duplicates)
+    try {
+      const roots = Math.max(0, Array.isArray(urls) ? urls.length : 0);
+      const capPerDepth: number[] = [];
+      let runningTotal = 0;
+      for (let d = 0; d <= maxDepth; d++) {
+        const cap = roots * (d === 0 ? 1 : Math.pow(maxLinksPerPage, d));
+        capPerDepth.push(cap);
+        runningTotal += cap;
+      }
+      const perDepthStr = capPerDepth.map((v, i) => `d${i}=${v}`).join(', ');
+      this.logger.log(
+        `Theoretical capacity (upper bound): roots=${roots}, maxDepth=${maxDepth}, perPageCap=${maxLinksPerPage} → ${perDepthStr}; total=${runningTotal}`
+      );
+    } catch {}
     
     const MAX_PAGES_PER_DEPTH = maxLinksPerPage; // server-enforced per depth cap
     const resultsMap = new Map<string, UrlResult>();
@@ -79,6 +94,25 @@ export class UrlFetcherService {
     for (const [depth, count] of pagesCrawledPerDepth.entries()) {
       depthCounts[depth] = count;
     }
+    
+    // Analysis of why we didn't reach theoretical maximum
+    this.logger.log(`=== DEPTH ANALYSIS ===`);
+    for (let d = 0; d <= maxDepth; d++) {
+      const actual = pagesCrawledPerDepth.get(d) || 0;
+      const theoretical = urls.length * (d === 0 ? 1 : Math.pow(MAX_PAGES_PER_DEPTH, d));
+      const efficiency = theoretical > 0 ? ((actual / theoretical) * 100).toFixed(1) : '0';
+      this.logger.log(`Depth ${d}: actual=${actual}, theoretical=${theoretical}, efficiency=${efficiency}%`);
+      
+      if (actual < theoretical && d > 0) {
+        this.logger.log(`  → Why depth ${d} is below max:`);
+        this.logger.log(`    • Previous depth had ${pagesCrawledPerDepth.get(d-1) || 0} pages (need ${theoretical/MAX_PAGES_PER_DEPTH} for full capacity)`);
+        this.logger.log(`    • Each page can yield max ${MAX_PAGES_PER_DEPTH} links`);
+        this.logger.log(`    • Many pages may not have enough same-domain links`);
+        this.logger.log(`    • Some links may be duplicates or filtered out`);
+      }
+    }
+    this.logger.log(`=== END DEPTH ANALYSIS ===`);
+    
     this.admission.releaseJobSlot();
     return { results, pagesCrawled, depthCounts, totalUniqueLinksFound: discoveredThisRun.size, totalLinksVisited: pagesCrawled, limits: { maxDepth: CRAWL_CONFIG.MAX_DEPTH, maxPagesPerDepth: MAX_PAGES_PER_DEPTH } };
   }
