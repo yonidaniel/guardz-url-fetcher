@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UrlFetcherService } from './url-fetcher.service';
+import { UrlFetcherService } from './core/url-fetcher.service';
 import axios from 'axios';
 
 // Mock axios

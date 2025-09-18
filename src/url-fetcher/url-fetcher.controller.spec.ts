@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UrlFetcherController } from './url-fetcher.controller';
-import { UrlFetcherService } from './url-fetcher.service';
+import { UrlFetcherController } from './core/url-fetcher.controller';
+import { UrlFetcherService } from './core/url-fetcher.service';
 
 describe('UrlFetcherController', () => {
   let controller: UrlFetcherController;

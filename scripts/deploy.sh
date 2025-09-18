@@ -80,19 +80,26 @@ echo "🔧 Setting up application on server..."
 ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" << EOF
     cd $APP_DIR
     
-    # Install curl if not present
-    if ! command -v curl &> /dev/null; then
-        echo "📦 Installing curl..."
-        sudo apt-get update && sudo apt-get install -y curl
+    # Install curl and lsof if not present
+    if ! command -v curl &> /dev/null || ! command -v lsof &> /dev/null; then
+        echo "📦 Installing curl and lsof..."
+        sudo apt-get update && sudo apt-get install -y curl lsof
     fi
     
-    # Install Node.js if not present
+    # Install Node.js 20 LTS if not present or version < 20
     if ! command -v node &> /dev/null; then
-        echo "📦 Installing Node.js..."
-        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        echo "📦 Installing Node.js 20 LTS..."
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
         sudo apt-get install -y nodejs
     else
-        echo "✅ Node.js already installed: \$(node --version)"
+        CURRENT_NODE=$(node -v | sed 's/v\([0-9]*\).*/\1/')
+        if [ "$CURRENT_NODE" -lt 20 ]; then
+            echo "📦 Upgrading Node.js to 20 LTS..."
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        else
+            echo "✅ Node.js already installed: \$(node --version)"
+        fi
     fi
     
     # Install dependencies (production only)
