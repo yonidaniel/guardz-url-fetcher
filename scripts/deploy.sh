@@ -63,10 +63,8 @@ tar --exclude='node_modules' \
     --exclude='.gitignore' \
     --exclude='debug.config.js' \
     --exclude='PROJECT_STRUCTURE.md' \
-    --exclude='scripts/debug.sh' \
-    --exclude='scripts/test-*.sh' \
     --exclude='scripts/check-logs.sh' \
-    --exclude='scripts/view-*.sh' \
+    --exclude='scripts/view-logs.sh' \
     --exclude='id_ed25519*' \
     -czf - . | ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" "mkdir -p $APP_DIR && rm -rf $APP_DIR/* && cd $APP_DIR && tar -xzf -"
 
