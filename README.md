@@ -94,11 +94,15 @@ Get the current status of the service and runtime statistics.
 **Response:**
 ```json
 {
-  "status": "healthy",
-  "activeRequests": 0,
-  "totalProcessed": 150,
-  "uptime": "2h 15m",
-  "memoryUsage": "45MB"
+  "status": "running",
+  "timestamp": "2025-09-18T17:08:55.567Z",
+  "summary": {
+    "total": 0,
+    "pending": 0,
+    "success": 0,
+    "error": 0
+  },
+  "depthCounts": {}
 }
 ```
 
@@ -121,10 +125,29 @@ Submit URLs to be fetched and processed with parallel execution and link discove
 **Response:**
 ```json
 {
-  "message": "URLs submitted for processing",
-  "requestId": "req_12345",
-  "totalUrls": 3,
-  "estimatedTime": "2-5 seconds"
+  "message": "Processing 1 URLs with depth 0",
+  "limits": {
+    "maxDepth": 3,
+    "maxPagesPerDepth": 5,
+    "maxUrlsPerRequest": 5
+  },
+  "pagesCrawled": 1,
+  "depthCounts": {
+    "0": 1
+  },
+  "results": [
+    {
+      "url": "https://httpbin.org/json",
+      "status": "success",
+      "timestamp": "2025-09-18T17:10:09.374Z",
+      "responseTime": 438,
+      "contentType": "application/json",
+      "content": {...},
+      "depth": 0
+    }
+  ],
+  "totalUniqueLinksFound": 0,
+  "totalLinksVisited": 1
 }
 ```
 
@@ -140,21 +163,18 @@ Retrieve all processed results with comprehensive metadata.
     {
       "url": "https://httpbin.org/json",
       "status": "success",
-      "statusCode": 200,
+      "timestamp": "2025-09-18T17:10:09.374Z",
+      "responseTime": 438,
       "contentType": "application/json",
       "content": {...},
-      "processingTime": 1250,
-      "timestamp": "2024-01-15T10:30:00Z",
-      "depth": 0,
-      "linkCount": 5
+      "depth": 0
     }
   ],
   "summary": {
-    "total": 10,
-    "successful": 7,
-    "failed": 1,
-    "pending": 2,
-    "averageProcessingTime": 2000
+    "total": 1,
+    "pending": 0,
+    "success": 1,
+    "error": 0
   }
 }
 ```
